@@ -31,6 +31,13 @@ resource "aws_security_group" "terraform_security" {
   }
 
   ingress {
+    from_port = 80
+    protocol = "tcp"
+    to_port = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     from_port = 22
     protocol = "tcp"
     to_port = 22
@@ -65,8 +72,10 @@ resource "aws_instance" "web" {
     host = self.public_ip
   }
 
+  # install java
+
   provisioner "file" {    
-    source = "scripts/install-java.sh"
+    source = "scripts/install-java8.sh"
     destination = "/tmp/setup.sh"
   }
 
@@ -78,8 +87,40 @@ resource "aws_instance" "web" {
     ]
   }
 
+  # install docker
+
+  provisioner "file" {
+    source = "scripts/install-docker.sh"
+    destination = "/tmp/setup.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/setup.sh",
+      "sudo /tmp/setup.sh",
+      "rm /tmp/setup.sh",
+    ]
+  }
+
+  # install jenkins
+
   provisioner "file" {
     source = "scripts/install-jenkins.sh"
+    destination = "/tmp/setup.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/setup.sh",
+      "sudo /tmp/setup.sh",
+      "rm /tmp/setup.sh",
+    ]
+  }
+
+  # configure jenkins with docker
+
+  provisioner "file" {
+    source = "scripts/configure-jenkins-docker.sh"
     destination = "/tmp/setup.sh"
   }
 
